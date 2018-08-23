@@ -8,14 +8,12 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  // var id = 
+
   counter.getNextUniqueId((err, data) => {
     fs.writeFile(path.join(exports.dataDir, `${data}.txt`), text, (err)=> {
       if (err) {
         throw ('error writing file');
       } else {
-        items[data] = text;
-        //console.log(items);
         callback(null, {id: data, text: text});
       }
     });
@@ -23,20 +21,43 @@ exports.create = (text, callback) => {
 };
 
 exports.readOne = (id, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, {id: id, text: item});
-  }
+  fs.readdir(exports.dataDir, (err, files) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      var foundFile = false;
+      for (var i = 0; i < files.length; i++) {
+        var currentId = files[i].slice(0, 5);
+        if (currentId === id) {
+          foundFile = true;
+          fs.readFile(path.join(exports.dataDir, files[i]), 'utf8', (err, data) => {
+            if (err) {
+              callback(new Error(`No item with id: ${id}`));
+            } else {
+              callback(null, {id: currentId, text: data});
+            }
+          });
+        }
+      }
+      if (!foundFile) {
+        callback(new Error(`No item with id: ${id}`));
+      }
+    }
+  });
 };
 
 exports.readAll = (callback) => {
   var data = [];
-  _.each(items, (item, idx) => {
-    data.push({ id: idx, text: items[idx] });
+  fs.readdir(exports.dataDir, (err, files) => {
+    if (err) {
+      throw ('error reading files');
+    } else {
+      for (var i = 0; i < files.length; i++) {
+        data.push({id: files[i].slice(0, 5), text: files[i].slice(0, 5)});
+      }
+      callback(null, data);
+    }
   });
-  callback(null, data);
 };
 
 exports.update = (id, text, callback) => {
@@ -52,9 +73,9 @@ exports.update = (id, text, callback) => {
 exports.delete = (id, callback) => {
   var item = items[id];
   delete items[id];
-  if(!item) {
+  if (!item) {
     // report an error if item not found
-    callback(new Error(`No item with id: ${id}`))
+    callback(new Error(`No item with id: ${id}`));
   } else {
     callback();
   }

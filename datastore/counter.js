@@ -40,9 +40,7 @@ const writeCounter = (count, callback) => {
 
 exports.getNextUniqueId = (callback) => {
   readCounter((err, fileData) => {
-    counter = fileData
-    counter = counter + 1;
-    writeCounter(counter, callback)
+    writeCounter(fileData + 1, callback);
   });
   // return zeroPaddedNumber(counter);
 };
